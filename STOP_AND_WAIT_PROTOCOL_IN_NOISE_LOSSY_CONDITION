@@ -1,1 +1,104 @@
+#Setting up new simulator
+set ns [new Simulator]
+#Setting nodes in simulator
+set n0 [$ns node]
+set n1 [$ns node]
+#Setting characteristics of nodes
+$ns at 0.0 "$n0 label Sender"
+$ns at 0.0 "$n1 label Receiver"
+$n0 color red
+$n1 color blue
+#Saving trace and nam file
+set nf [open stop_wait_n.nam w]
+$ns namtrace-all $nf
+set f [open stop_wait_n.tr w]
+$ns trace-all $f
+#Connection Specifics of nodes
+$ns duplex-link $n0 $n1 0.2Mb 200ms DropTail
+$ns duplex-link-op $n0 $n1 orient right
+$ns duplex-link-op $n0 $n1 color green
+$ns queue-limit $n0 $n1 10
+#Tracing the Agent
+Agent/TCP set nam_tracevar_ true
+#Starting TCP agent
+set tcp [new Agent/TCP]
+set tcp1 [new Agent/TCP]
+set tcp2 [new Agent/TCP]
 
+
+
+$tcp set windowInit_ 1
+$tcp set maxcwnd_ 1
+$tcp1 set windowInit_ 1
+$tcp1 set maxcwnd_ 1
+$tcp2 set windowInit_ 1
+$tcp2 set maxcwnd_ 1
+$ns attach-agent $n0 $tcp
+$ns attach-agent $n0 $tcp1
+$ns attach-agent $n0 $tcp2
+#Starting TCPSink Agent
+set sink [new Agent/TCPSink]
+set sink1 [new Agent/TCPSink]
+set sink2 [new Agent/TCPSink]
+$ns attach-agent $n1 $sink
+$ns attach-agent $n1 $sink1
+$ns attach-agent $n1 $sink2
+#Attaching sink to node
+$ns connect $tcp $sink
+$ns connect $tcp1 $sink1
+$ns connect $tcp2 $sink2
+#Starting FTP
+set ftp [new Application/FTP]
+$ftp attach-agent $tcp
+set ftp1 [new Application/FTP]
+$ftp1 attach-agent $tcp1
+set ftp2 [new Application/FTP]
+$ftp2 attach-agent $tcp2
+#Connection characteristics
+$ns at 0.1 "$ftp start"
+$ns at 0.1 "$ftp1 start"
+
+
+
+$ns at 0.1 "$ftp2 start"
+$ns at 0.11 "$ftp1 stop"
+$ns at 0.11 "$ftp2 stop"
+$ns at 0.11 "$tcp set windowlnit 1"
+$ns at 0.11 "$tcp set maxcwnd 1"
+$ns at 0.94 "$ns queue-limit $n0 $n1 0"
+$ns at 0.95 "$ns queue-limit $n0 $n1 10"
+$ns at 1.1 "$ns detach-agent $n1 $tcp ; $ns detach-agent $n1 $sink"
+$ns at 1.13 "$ftp1 start"
+$ns at 1.13 "$tcp1 set windowlnit 1"
+$ns at 1.13 "$tcp1 set maxcwnd 1"
+$ns at 1.94 "$ns queue-limit $n0 $n1 0"
+$ns at 2.1 "$ns queue-limit $n0 $n1 10"
+$ns at 2.1 "$ns detach-agent $n1 $tcp1 ; $ns detach-agent $n1 $sink1"
+$ns at 2.2 "$tcp2 set windowlnit 1"
+$ns at 2.2 "$tcp2 set maxcwnd 1"
+$ns at 2.2 "$ftp2 start"
+$ns at 6.8 "$ftp2 stop"
+$ns at 7.2 "finish"
+#Display characteristics
+$ns at 0.0 "$ns trace-annotate \"stop and wait\""
+$ns at 0.1 "$ns trace-annotate \"FTP starts \""
+$ns at 0.5 "$ns trace-annotate \" sender start Sending Packet_0 to receiver \""
+$ns at 0.95 "$ns trace-annotate \" receiver receivers 1st packet\""
+$ns at 0.96 "$ns trace-annotate \"Sender starts sending Packet 1 but due to noise packet got lost\""
+$ns at 1.14 "$ns trace-annotate \"so sender will again send the same packets to receiver\""
+$ns at 1.575 "$ns trace-annotate \"sender gets positive ack from receiver\""
+$ns at 6.8 "$ns trace-annotate \"ftp stop\""
+#Procedure to finish file
+proc finish {} {
+
+
+
+global ns
+$ns flush-trace
+# puts "filtering..."
+# exec tclsh ../bin/namfilter.tcl Go-Back-N.nam
+puts "running nam..."
+exec nam stop_wait_n.nam &
+exit 0
+}
+$ns run
