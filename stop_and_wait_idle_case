@@ -24,7 +24,7 @@ $tcp set windowInit_ 1
 $tcp set maxcwnd_ 1
 #Attaching agent to node
 
-22
+
 
 $ns attach-agent $n0 $tcp
 #Starting TCPSink Agent
@@ -57,7 +57,7 @@ $ns flush-trace
 puts "running nam..."
 exec nam stop_wait.nam &
 
-23
+
 
 exit 0}
 $ns run
