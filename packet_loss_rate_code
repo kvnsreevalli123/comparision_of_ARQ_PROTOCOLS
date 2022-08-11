@@ -1,0 +1,24 @@
+BEGIN {
+receive=0
+drop=0
+total=0
+ratio1=0.0
+ratio2=0.0}
+
+
+
+{
+if ($1=="r" && $4==3){
+receive++;
+}
+if ($1=="d"){
+drop++;}}
+END {
+total=receive+drop+1
+ratio1=(receive/total)
+ratio2=(drop/total)
+printf("Total packet sent = %d\n",total)
+printf("Packets received = %d\n",receive)
+printf("Packets dropped = %d\n",drop)
+printf("Packet delivery rate = %f\n",ratio1)
+printf("Packet loss rate = %f\n",ratio2)}
