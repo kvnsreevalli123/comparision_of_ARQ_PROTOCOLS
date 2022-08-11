@@ -1,0 +1,63 @@
+#Setting up new simulator
+set ns [new Simulator]
+#Setting nodes in simulator
+set n0 [$ns node]
+set n1 [$ns node]
+#Setting characteristics of nodes
+$ns at 0.0 "$n0 label Sender"
+$ns at 0.0 "$n1 label Receiver"
+#Saving trace and nam file
+set nf [open stop_wait.nam w]
+$ns namtrace-all $nf
+set f [open stop_wait.tr w]
+$ns trace-all $f
+#Connection Specifics of nodes
+$ns duplex-link $n0 $n1 0.2Mb 200ms DropTail
+$ns duplex-link-op $n0 $n1 orient right
+$ns duplex-link-op $n0 $n1 color green
+$ns queue-limit $n0 $n1 10
+#Tracing the Agent
+Agent/TCP set nam_tracevar_ true
+#Starting TCP agent
+set tcp [new Agent/TCP]
+$tcp set windowInit_ 1
+$tcp set maxcwnd_ 1
+#Attaching agent to node
+
+22
+
+$ns attach-agent $n0 $tcp
+#Starting TCPSink Agent
+set sink [new Agent/TCPSink]
+$ns attach-agent $n1 $sink
+#Attaching sink to node
+$ns connect $tcp $sink
+#Starting FTP
+set ftp [new Application/FTP]
+$ftp attach-agent $tcp
+#Connection characteristics
+$ns at 0.1 "$ftp start"
+$ns at 5.8 "$ftp stop"
+$ns at 6.2 "$ns detach-agent $n0 $tcp ; $ns detach-agent $n1 $sink"
+$ns at 6.3 "finish"
+#Display characteristics
+$ns at 0.0 "$ns trace-annotate \"stop and wait \""
+$ns at 0.1 "$ns trace-annotate \"FTP starts at 0.1\""
+$ns at 0.51 "$ns trace-annotate \"Sender start sends packets Packet 0\""
+$ns at 0.941 "$ns trace-annotate \"sender receives Acknowledgement 0 \""
+$ns at 0.981 "$ns trace-annotate \"Sender send Packet 1 to receiver\""
+$ns at 1.31 "$ns trace-annotate \"sender Receive Acknowledgement from receiver \""
+$ns at 5.8 "$ns trace-annotate \"FTP stops\""
+#Procedure to finish file
+proc finish {} {
+global ns
+$ns flush-trace
+# puts "filtering..."
+# exec tclsh ../bin/namfilter.tcl Go-Back-N.nam
+puts "running nam..."
+exec nam stop_wait.nam &
+
+23
+
+exit 0}
+$ns run
